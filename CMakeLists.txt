@@ -307,6 +307,10 @@ add_library(freetype
   ${BASE_SRCS}
 )
 
+target_include_directories(freetype
+    PUBLIC ${PROJECT_SOURCE_DIR}/include
+    PUBLIC ${PROJECT_BINRARY_DIR}/include
+)
 
 if (BUILD_SHARED_LIBS)
   set_target_properties(freetype PROPERTIES
