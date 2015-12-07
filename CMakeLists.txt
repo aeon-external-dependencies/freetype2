@@ -312,6 +312,9 @@ target_include_directories(freetype
     PUBLIC ${PROJECT_BINRARY_DIR}/include
 )
 
+set_target_properties(freetype PROPERTIES
+                      FOLDER "External/FreeType")
+
 if (BUILD_SHARED_LIBS)
   set_target_properties(freetype PROPERTIES
     VERSION ${PROJECT_VERSION}
@@ -397,6 +400,7 @@ include(CPack)
 
 # add make dist target
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
-
+set_target_properties(dist PROPERTIES
+                      FOLDER "External/FreeType")
 
 # eof
