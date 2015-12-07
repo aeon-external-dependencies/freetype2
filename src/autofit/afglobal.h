@@ -23,7 +23,7 @@
 
 #include "aftypes.h"
 #include "afmodule.h"
-#include "hbshim.h"
+#include "afshaper.h"
 
 
 FT_BEGIN_HEADER
@@ -34,7 +34,7 @@ FT_BEGIN_HEADER
 
 
 #undef  SCRIPT
-#define SCRIPT( s, S, d, h, sc1, sc2, sc3 )                    \
+#define SCRIPT( s, S, d, h, ss )                               \
           AF_DECLARE_SCRIPT_CLASS( af_ ## s ## _script_class )
 
 #include "afscript.h"

@@ -28,32 +28,35 @@ FT_BEGIN_HEADER
 
   /* an auxiliary macro to decode a UTF-8 character -- since we only use */
   /* hard-coded, self-converted data, no error checking is performed     */
-#define GET_UTF8_CHAR( ch, p )                    \
-          ch = (unsigned char)*p++;               \
-          if ( ch >= 0x80 )                       \
-          {                                       \
-            FT_UInt  len;                         \
-                                                  \
-                                                  \
-            if ( ch < 0xE0 )                      \
-            {                                     \
-              len = 1;                            \
-              ch &= 0x1F;                         \
-            }                                     \
-            else if ( ch < 0xF0 )                 \
-            {                                     \
-              len = 2;                            \
-              ch &= 0x0F;                         \
-            }                                     \
-            else                                  \
-            {                                     \
-              len = 3;                            \
-              ch &= 0x07;                         \
-            }                                     \
-                                                  \
-            for ( ; len > 0; len-- )              \
-              ch = ( ch << 6 ) | ( *p++ & 0x3F ); \
-          }
+#define GET_UTF8_CHAR( ch, p )                      \
+          do                                        \
+          {                                         \
+            ch = (unsigned char)*p++;               \
+            if ( ch >= 0x80 )                       \
+            {                                       \
+              FT_UInt  len_;                        \
+                                                    \
+                                                    \
+              if ( ch < 0xE0 )                      \
+              {                                     \
+                len_ = 1;                           \
+                ch  &= 0x1F;                        \
+              }                                     \
+              else if ( ch < 0xF0 )                 \
+              {                                     \
+                len_ = 2;                           \
+                ch  &= 0x0F;                        \
+              }                                     \
+              else                                  \
+              {                                     \
+                len_ = 3;                           \
+                ch  &= 0x07;                        \
+              }                                     \
+                                                    \
+              for ( ; len_ > 0; len_-- )            \
+                ch = ( ch << 6 ) | ( *p++ & 0x3F ); \
+            }                                       \
+          } while ( 0 )
 
 
   /*************************************************************************/
@@ -75,62 +78,68 @@ FT_BEGIN_HEADER
   typedef enum  AF_Blue_String_
   {
     AF_BLUE_STRING_ARABIC_TOP = 0,
-    AF_BLUE_STRING_ARABIC_BOTTOM = 13,
-    AF_BLUE_STRING_ARABIC_JOIN = 24,
-    AF_BLUE_STRING_CYRILLIC_CAPITAL_TOP = 27,
-    AF_BLUE_STRING_CYRILLIC_CAPITAL_BOTTOM = 44,
-    AF_BLUE_STRING_CYRILLIC_SMALL = 61,
-    AF_BLUE_STRING_CYRILLIC_SMALL_DESCENDER = 78,
-    AF_BLUE_STRING_DEVANAGARI_BASE = 85,
-    AF_BLUE_STRING_DEVANAGARI_TOP = 110,
-    AF_BLUE_STRING_DEVANAGARI_HEAD = 135,
-    AF_BLUE_STRING_DEVANAGARI_BOTTOM = 160,
-    AF_BLUE_STRING_GREEK_CAPITAL_TOP = 167,
-    AF_BLUE_STRING_GREEK_CAPITAL_BOTTOM = 182,
-    AF_BLUE_STRING_GREEK_SMALL_BETA_TOP = 195,
-    AF_BLUE_STRING_GREEK_SMALL = 208,
-    AF_BLUE_STRING_GREEK_SMALL_DESCENDER = 225,
-    AF_BLUE_STRING_HEBREW_TOP = 242,
-    AF_BLUE_STRING_HEBREW_BOTTOM = 259,
-    AF_BLUE_STRING_HEBREW_DESCENDER = 272,
-    AF_BLUE_STRING_LAO_TOP = 283,
-    AF_BLUE_STRING_LAO_BOTTOM = 308,
-    AF_BLUE_STRING_LAO_ASCENDER = 333,
-    AF_BLUE_STRING_LAO_LARGE_ASCENDER = 346,
-    AF_BLUE_STRING_LAO_DESCENDER = 356,
-    AF_BLUE_STRING_LATIN_CAPITAL_TOP = 375,
-    AF_BLUE_STRING_LATIN_CAPITAL_BOTTOM = 384,
-    AF_BLUE_STRING_LATIN_SMALL_F_TOP = 393,
-    AF_BLUE_STRING_LATIN_SMALL = 401,
-    AF_BLUE_STRING_LATIN_SMALL_DESCENDER = 409,
-    AF_BLUE_STRING_LATIN_SUBS_CAPITAL_TOP = 415,
-    AF_BLUE_STRING_LATIN_SUBS_CAPITAL_BOTTOM = 431,
-    AF_BLUE_STRING_LATIN_SUBS_SMALL_F_TOP = 447,
-    AF_BLUE_STRING_LATIN_SUBS_SMALL = 463,
-    AF_BLUE_STRING_LATIN_SUBS_SMALL_DESCENDER = 491,
-    AF_BLUE_STRING_LATIN_SUPS_CAPITAL_TOP = 507,
-    AF_BLUE_STRING_LATIN_SUPS_CAPITAL_BOTTOM = 531,
-    AF_BLUE_STRING_LATIN_SUPS_SMALL_F_TOP = 553,
-    AF_BLUE_STRING_LATIN_SUPS_SMALL = 573,
-    AF_BLUE_STRING_LATIN_SUPS_SMALL_DESCENDER = 592,
-    AF_BLUE_STRING_TELUGU_TOP = 601,
-    AF_BLUE_STRING_TELUGU_BOTTOM = 623,
-    AF_BLUE_STRING_THAI_TOP = 645,
-    AF_BLUE_STRING_THAI_BOTTOM = 664,
-    AF_BLUE_STRING_THAI_ASCENDER = 686,
-    AF_BLUE_STRING_THAI_LARGE_ASCENDER = 696,
-    AF_BLUE_STRING_THAI_DESCENDER = 706,
-    AF_BLUE_STRING_THAI_LARGE_DESCENDER = 719,
-    AF_BLUE_STRING_THAI_DIGIT_TOP = 726,
-    af_blue_1_1 = 735,
+    AF_BLUE_STRING_ARABIC_BOTTOM = 18,
+    AF_BLUE_STRING_ARABIC_JOIN = 33,
+    AF_BLUE_STRING_CYRILLIC_CAPITAL_TOP = 36,
+    AF_BLUE_STRING_CYRILLIC_CAPITAL_BOTTOM = 60,
+    AF_BLUE_STRING_CYRILLIC_SMALL = 84,
+    AF_BLUE_STRING_CYRILLIC_SMALL_DESCENDER = 108,
+    AF_BLUE_STRING_DEVANAGARI_BASE = 117,
+    AF_BLUE_STRING_DEVANAGARI_TOP = 149,
+    AF_BLUE_STRING_DEVANAGARI_HEAD = 181,
+    AF_BLUE_STRING_DEVANAGARI_BOTTOM = 213,
+    AF_BLUE_STRING_GREEK_CAPITAL_TOP = 221,
+    AF_BLUE_STRING_GREEK_CAPITAL_BOTTOM = 242,
+    AF_BLUE_STRING_GREEK_SMALL_BETA_TOP = 260,
+    AF_BLUE_STRING_GREEK_SMALL = 278,
+    AF_BLUE_STRING_GREEK_SMALL_DESCENDER = 302,
+    AF_BLUE_STRING_HEBREW_TOP = 326,
+    AF_BLUE_STRING_HEBREW_BOTTOM = 350,
+    AF_BLUE_STRING_HEBREW_DESCENDER = 368,
+    AF_BLUE_STRING_KHMER_TOP = 383,
+    AF_BLUE_STRING_KHMER_BOTTOM = 407,
+    AF_BLUE_STRING_KHMER_DESCENDER = 439,
+    AF_BLUE_STRING_KHMER_LARGE_DESCENDER = 466,
+    AF_BLUE_STRING_KHMER_SYMBOLS_WAXING_TOP = 495,
+    AF_BLUE_STRING_KHMER_SYMBOLS_WANING_BOTTOM = 503,
+    AF_BLUE_STRING_LAO_TOP = 511,
+    AF_BLUE_STRING_LAO_BOTTOM = 543,
+    AF_BLUE_STRING_LAO_ASCENDER = 575,
+    AF_BLUE_STRING_LAO_LARGE_ASCENDER = 591,
+    AF_BLUE_STRING_LAO_DESCENDER = 603,
+    AF_BLUE_STRING_LATIN_CAPITAL_TOP = 627,
+    AF_BLUE_STRING_LATIN_CAPITAL_BOTTOM = 643,
+    AF_BLUE_STRING_LATIN_SMALL_F_TOP = 659,
+    AF_BLUE_STRING_LATIN_SMALL = 673,
+    AF_BLUE_STRING_LATIN_SMALL_DESCENDER = 687,
+    AF_BLUE_STRING_LATIN_SUBS_CAPITAL_TOP = 697,
+    AF_BLUE_STRING_LATIN_SUBS_CAPITAL_BOTTOM = 717,
+    AF_BLUE_STRING_LATIN_SUBS_SMALL_F_TOP = 737,
+    AF_BLUE_STRING_LATIN_SUBS_SMALL = 757,
+    AF_BLUE_STRING_LATIN_SUBS_SMALL_DESCENDER = 793,
+    AF_BLUE_STRING_LATIN_SUPS_CAPITAL_TOP = 813,
+    AF_BLUE_STRING_LATIN_SUPS_CAPITAL_BOTTOM = 844,
+    AF_BLUE_STRING_LATIN_SUPS_SMALL_F_TOP = 873,
+    AF_BLUE_STRING_LATIN_SUPS_SMALL = 899,
+    AF_BLUE_STRING_LATIN_SUPS_SMALL_DESCENDER = 924,
+    AF_BLUE_STRING_TELUGU_TOP = 935,
+    AF_BLUE_STRING_TELUGU_BOTTOM = 963,
+    AF_BLUE_STRING_THAI_TOP = 991,
+    AF_BLUE_STRING_THAI_BOTTOM = 1015,
+    AF_BLUE_STRING_THAI_ASCENDER = 1043,
+    AF_BLUE_STRING_THAI_LARGE_ASCENDER = 1055,
+    AF_BLUE_STRING_THAI_DESCENDER = 1067,
+    AF_BLUE_STRING_THAI_LARGE_DESCENDER = 1083,
+    AF_BLUE_STRING_THAI_DIGIT_TOP = 1091,
+    af_blue_1_1 = 1102,
 #ifdef AF_CONFIG_OPTION_CJK
     AF_BLUE_STRING_CJK_TOP = af_blue_1_1 + 1,
-    AF_BLUE_STRING_CJK_BOTTOM = af_blue_1_1 + 153,
-    af_blue_1_1_1 = af_blue_1_1 + 304,
+    AF_BLUE_STRING_CJK_BOTTOM = af_blue_1_1 + 203,
+    af_blue_1_1_1 = af_blue_1_1 + 404,
 #ifdef AF_CONFIG_OPTION_CJK_BLUE_HANI_VERT
     AF_BLUE_STRING_CJK_LEFT = af_blue_1_1_1 + 1,
-    AF_BLUE_STRING_CJK_RIGHT = af_blue_1_1_1 + 153,
-    af_blue_1_1_2 = af_blue_1_1_1 + 304,
+    AF_BLUE_STRING_CJK_RIGHT = af_blue_1_1_1 + 204,
+    af_blue_1_1_2 = af_blue_1_1_1 + 405,
 #else
     af_blue_1_1_2 = af_blue_1_1_1 + 0,
 #endif /* AF_CONFIG_OPTION_CJK_BLUE_HANI_VERT */
@@ -185,13 +194,15 @@ FT_BEGIN_HEADER
     AF_BLUE_STRINGSET_DEVA = 10,
     AF_BLUE_STRINGSET_GREK = 16,
     AF_BLUE_STRINGSET_HEBR = 23,
-    AF_BLUE_STRINGSET_LAO = 27,
-    AF_BLUE_STRINGSET_LATN = 33,
-    AF_BLUE_STRINGSET_LATB = 40,
-    AF_BLUE_STRINGSET_LATP = 47,
-    AF_BLUE_STRINGSET_TELU = 54,
-    AF_BLUE_STRINGSET_THAI = 57,
-    af_blue_2_1 = 65,
+    AF_BLUE_STRINGSET_KHMR = 27,
+    AF_BLUE_STRINGSET_KHMS = 32,
+    AF_BLUE_STRINGSET_LAO = 35,
+    AF_BLUE_STRINGSET_LATN = 41,
+    AF_BLUE_STRINGSET_LATB = 48,
+    AF_BLUE_STRINGSET_LATP = 55,
+    AF_BLUE_STRINGSET_TELU = 62,
+    AF_BLUE_STRINGSET_THAI = 65,
+    af_blue_2_1 = 73,
 #ifdef AF_CONFIG_OPTION_CJK
     AF_BLUE_STRINGSET_HANI = af_blue_2_1 + 0,
     af_blue_2_1_1 = af_blue_2_1 + 2,

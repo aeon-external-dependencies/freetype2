@@ -18,7 +18,7 @@
 
 #include "afglobal.h"
 #include "afranges.h"
-#include "hbshim.h"
+#include "afshaper.h"
 #include FT_INTERNAL_DEBUG_H
 
 
@@ -42,13 +42,13 @@
 
 
 #undef  SCRIPT
-#define SCRIPT( s, S, d, h, sc1, sc2, sc3 ) \
+#define SCRIPT( s, S, d, h, ss ) \
           AF_DEFINE_SCRIPT_CLASS(           \
             af_ ## s ## _script_class,      \
             AF_SCRIPT_ ## S,                \
             af_ ## s ## _uniranges,         \
             af_ ## s ## _nonbase_uniranges, \
-            sc1, sc2, sc3 )
+            ss )
 
 #include "afscript.h"
 
@@ -83,7 +83,7 @@
 
 
 #undef  SCRIPT
-#define SCRIPT( s, S, d, h, sc1, sc2, sc3 ) \
+#define SCRIPT( s, S, d, h, ss ) \
           &af_ ## s ## _script_class,
 
   FT_LOCAL_ARRAY_DEF( AF_ScriptClass )
@@ -240,12 +240,12 @@
       else
       {
         /* get glyphs not directly addressable by cmap */
-        af_get_coverage( globals, style_class, gstyles );
+        af_shaper_get_coverage( globals, style_class, gstyles );
       }
     }
 
     /* handle the default OpenType features of the default script ... */
-    af_get_coverage( globals, AF_STYLE_CLASSES_GET[dflt], gstyles );
+    af_shaper_get_coverage( globals, AF_STYLE_CLASSES_GET[dflt], gstyles );
 
     /* ... and the remaining default OpenType features */
     for ( ss = 0; AF_STYLE_CLASSES_GET[ss]; ss++ )
@@ -254,7 +254,7 @@
 
 
       if ( ss != dflt && style_class->coverage == AF_COVERAGE_DEFAULT )
-        af_get_coverage( globals, style_class, gstyles );
+        af_shaper_get_coverage( globals, style_class, gstyles );
     }
 
     /* mark ASCII digits */
