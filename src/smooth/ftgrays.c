@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    A new `perfect' anti-aliasing renderer (body).                       */
 /*                                                                         */
-/*  Copyright 2000-2015 by                                                 */
+/*  Copyright 2000-2016 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -18,7 +18,7 @@
   /*************************************************************************/
   /*                                                                       */
   /* This file can be compiled without the rest of the FreeType engine, by */
-  /* defining the _STANDALONE_ macro when compiling it.  You also need to  */
+  /* defining the STANDALONE_ macro when compiling it.  You also need to   */
   /* put the files `ftgrays.h' and `ftimage.h' into the current            */
   /* compilation directory.  Typically, you could do something like        */
   /*                                                                       */
@@ -27,9 +27,9 @@
   /* - copy `include/freetype/ftimage.h' and `src/smooth/ftgrays.h' to the */
   /*   same directory                                                      */
   /*                                                                       */
-  /* - compile `ftgrays' with the _STANDALONE_ macro defined, as in        */
+  /* - compile `ftgrays' with the STANDALONE_ macro defined, as in         */
   /*                                                                       */
-  /*     cc -c -D_STANDALONE_ ftgrays.c                                    */
+  /*     cc -c -DSTANDALONE_ ftgrays.c                                     */
   /*                                                                       */
   /* The renderer can be initialized with a call to                        */
   /* `ft_gray_raster.raster_new'; an anti-aliased bitmap can be generated  */
@@ -91,7 +91,7 @@
 #define FT_COMPONENT  trace_smooth
 
 
-#ifdef _STANDALONE_
+#ifdef STANDALONE_
 
 
   /* The size in bytes of the render pool used by the scan-line converter  */
@@ -256,7 +256,7 @@ typedef ptrdiff_t  FT_PtrDist;
          };
 
 
-#else /* !_STANDALONE_ */
+#else /* !STANDALONE_ */
 
 
 #include <ft2build.h>
@@ -274,7 +274,7 @@ typedef ptrdiff_t  FT_PtrDist;
 #define ErrRaster_Memory_Overflow   Smooth_Err_Out_Of_Memory
 
 
-#endif /* !_STANDALONE_ */
+#endif /* !STANDALONE_ */
 
 
 #ifndef FT_MEM_SET
@@ -320,17 +320,17 @@ typedef ptrdiff_t  FT_PtrDist;
 
 #define ONE_PIXEL       ( 1L << PIXEL_BITS )
 #define TRUNC( x )      ( (TCoord)( (x) >> PIXEL_BITS ) )
-#define SUBPIXELS( x )  ( (TPos)(x) << PIXEL_BITS )
+#define SUBPIXELS( x )  ( (TPos)(x) * ONE_PIXEL )
 #define FLOOR( x )      ( (x) & -ONE_PIXEL )
 #define CEILING( x )    ( ( (x) + ONE_PIXEL - 1 ) & -ONE_PIXEL )
 #define ROUND( x )      ( ( (x) + ONE_PIXEL / 2 ) & -ONE_PIXEL )
 
 #if PIXEL_BITS >= 6
-#define UPSCALE( x )    ( (x) << ( PIXEL_BITS - 6 ) )
+#define UPSCALE( x )    ( (x) * ( ONE_PIXEL >> 6 ) )
 #define DOWNSCALE( x )  ( (x) >> ( PIXEL_BITS - 6 ) )
 #else
 #define UPSCALE( x )    ( (x) >> ( 6 - PIXEL_BITS ) )
-#define DOWNSCALE( x )  ( (x) << ( 6 - PIXEL_BITS ) )
+#define DOWNSCALE( x )  ( (x) * ( 64 >> PIXEL_BITS ) )
 #endif
 
 
@@ -388,25 +388,7 @@ typedef ptrdiff_t  FT_PtrDist;
 
   typedef long  TCoord;   /* integer scanline/pixel coordinate */
   typedef long  TPos;     /* sub-pixel coordinate              */
-
-  /* determine the type used to store cell areas.  This normally takes at */
-  /* least PIXEL_BITS*2 + 1 bits.  On 16-bit systems, we need to use      */
-  /* `long' instead of `int', otherwise bad things happen                 */
-
-#if PIXEL_BITS <= 7
-
-  typedef int  TArea;
-
-#else /* PIXEL_BITS >= 8 */
-
-  /* approximately determine the size of integers using an ANSI-C header */
-#if FT_UINT_MAX == 0xFFFFU
-  typedef long  TArea;
-#else
-  typedef int   TArea;
-#endif
-
-#endif /* PIXEL_BITS >= 8 */
+  typedef long  TArea;    /* cell areas, coordinate products   */
 
 
   /* maximum number of gray spans in a call to the span callback */
@@ -1521,7 +1503,8 @@ typedef ptrdiff_t  FT_PtrDist;
       printf( "%3d:", yindex );
 
       for ( cell = ras.ycells[yindex]; cell != NULL; cell = cell->next )
-        printf( " (%3ld, c:%4ld, a:%6d)", cell->x, cell->cover, cell->area );
+        printf( " (%3ld, c:%4ld, a:%6ld)",
+                cell->x, cell->cover, cell->area );
       printf( "\n" );
     }
   }
@@ -1601,7 +1584,7 @@ typedef ptrdiff_t  FT_PtrDist;
   }
 
 
-#ifdef _STANDALONE_
+#ifdef STANDALONE_
 
   /*************************************************************************/
   /*                                                                       */
@@ -1883,7 +1866,7 @@ typedef ptrdiff_t  FT_PtrDist;
     return FT_THROW( Invalid_Outline );
   }
 
-#endif /* _STANDALONE_ */
+#endif /* STANDALONE_ */
 
 
   typedef struct  gray_TBand_
@@ -2162,7 +2145,7 @@ typedef ptrdiff_t  FT_PtrDist;
   /**** RASTER OBJECT CREATION: In stand-alone mode, we simply use *****/
   /****                         a static object.                   *****/
 
-#ifdef _STANDALONE_
+#ifdef STANDALONE_
 
   static int
   gray_raster_new( void*       memory,
@@ -2187,7 +2170,7 @@ typedef ptrdiff_t  FT_PtrDist;
     FT_UNUSED( raster );
   }
 
-#else /* !_STANDALONE_ */
+#else /* !STANDALONE_ */
 
   static int
   gray_raster_new( FT_Memory   memory,
@@ -2217,7 +2200,7 @@ typedef ptrdiff_t  FT_PtrDist;
     FT_FREE( raster );
   }
 
-#endif /* !_STANDALONE_ */
+#endif /* !STANDALONE_ */
 
 
   static void

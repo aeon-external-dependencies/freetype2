@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    TrueType GX Font Variation loader                                    */
 /*                                                                         */
-/*  Copyright 2004-2015 by                                                 */
+/*  Copyright 2004-2016 by                                                 */
 /*  David Turner, Robert Wilhelm, Werner Lemberg, and George Williams.     */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -551,7 +551,7 @@
       for ( i = 0; i < blend->tuplecount; i++ )
       {
         FT_TRACE5(( "  [ " ));
-        for ( j = 0 ; j < (FT_UInt)gvar_head.axisCount; j++ )
+        for ( j = 0; j < (FT_UInt)gvar_head.axisCount; j++ )
         {
           blend->tuplecoords[i * gvar_head.axisCount + j] =
             FT_GET_SHORT() * 4;                 /* convert to FT_Fixed */
@@ -632,8 +632,8 @@
         break;
       }
 
-      else if ( ( blend->normalizedcoords[i] < 0 && tuple_coords[i] > 0 ) ||
-                ( blend->normalizedcoords[i] > 0 && tuple_coords[i] < 0 ) )
+      else if ( ( blend->normalizedcoords[i] < FT_MIN( 0, tuple_coords[i] ) ) ||
+                ( blend->normalizedcoords[i] > FT_MAX( 0, tuple_coords[i] ) ) )
       {
         FT_TRACE6(( "      tuple coordinate value %.4f is exceeded, stop\n",
                     tuple_coords[i] / 65536.0 ));
@@ -646,10 +646,9 @@
         FT_TRACE6(( "      tuple coordinate value %.4f fits\n",
                     tuple_coords[i] / 65536.0 ));
         /* not an intermediate tuple */
-        apply = FT_MulFix( apply,
-                           blend->normalizedcoords[i] > 0
-                             ? blend->normalizedcoords[i]
-                             : -blend->normalizedcoords[i] );
+        apply = FT_MulDiv( apply,
+                           blend->normalizedcoords[i],
+                           tuple_coords[i] );
       }
 
       else if ( blend->normalizedcoords[i] < im_start_coords[i] ||

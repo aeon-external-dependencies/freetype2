@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    HarfBuzz interface for accessing OpenType features (body).           */
 /*                                                                         */
-/*  Copyright 2013-2015 by                                                 */
+/*  Copyright 2013-2016 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -86,7 +86,7 @@
 
   /* load HarfBuzz script tags */
 #undef  SCRIPT
-#define SCRIPT( s, S, d, h, ss )  h,
+#define SCRIPT( s, S, d, h, H, ss )  h,
 
 
   static const hb_script_t  scripts[] =
@@ -98,7 +98,8 @@
   FT_Error
   af_shaper_get_coverage( AF_FaceGlobals  globals,
                           AF_StyleClass   style_class,
-                          FT_UShort*      gstyles )
+                          FT_UShort*      gstyles,
+                          FT_Bool         default_script )
   {
     hb_face_t*  face;
 
@@ -143,8 +144,7 @@
     /* `hb_ot_tags_from_script' usually returns HB_OT_TAG_DEFAULT_SCRIPT */
     /* as the second tag.  We change that to HB_TAG_NONE except for the  */
     /* default script.                                                   */
-    if ( style_class->script == globals->module->default_script &&
-         style_class->coverage == AF_COVERAGE_DEFAULT           )
+    if ( default_script )
     {
       if ( script_tags[0] == HB_TAG_NONE )
         script_tags[0] = HB_OT_TAG_DEFAULT_SCRIPT;
@@ -158,6 +158,11 @@
     }
     else
     {
+      /* we use non-standard tags like `khms' for special purposes;       */
+      /* HarfBuzz maps them to `DFLT', which we don't want to handle here */
+      if ( script_tags[0] == HB_OT_TAG_DEFAULT_SCRIPT )
+        goto Exit;
+
       if ( script_tags[1] == HB_OT_TAG_DEFAULT_SCRIPT )
         script_tags[1] = HB_TAG_NONE;
     }
@@ -466,7 +471,7 @@
     while ( *p == ' ' )
       p++;
 
-    /* count characters up to next space (or end of buffer) */
+    /* count bytes up to next space (or end of buffer) */
     q = p;
     while ( !( *q == ' ' || *q == '\0' ) )
       GET_UTF8_CHAR( dummy, q );
@@ -483,12 +488,52 @@
     /* glyph indices, possibly applying a feature                   */
     hb_shape( font, buf, feature, feature ? 1 : 0 );
 
+    if ( feature )
+    {
+      hb_buffer_t*  hb_buf = metrics->globals->hb_buf;
+
+      unsigned int      gcount;
+      hb_glyph_info_t*  ginfo;
+
+      unsigned int      hb_gcount;
+      hb_glyph_info_t*  hb_ginfo;
+
+
+      /* we have to check whether applying a feature does actually change */
+      /* glyph indices; otherwise the affected glyph or glyphs aren't     */
+      /* available at all in the feature                                  */
+
+      hb_buffer_clear_contents( hb_buf );
+      hb_buffer_add_utf8( hb_buf, p, len, 0, len );
+      hb_buffer_guess_segment_properties( hb_buf );
+      hb_shape( font, hb_buf, NULL, 0 );
+
+      ginfo    = hb_buffer_get_glyph_infos( buf, &gcount );
+      hb_ginfo = hb_buffer_get_glyph_infos( hb_buf, &hb_gcount );
+
+      if ( gcount == hb_gcount )
+      {
+        unsigned int  i;
+
+
+        for (i = 0; i < gcount; i++ )
+          if ( ginfo[i].codepoint != hb_ginfo[i].codepoint )
+            break;
+
+        if ( i == gcount )
+        {
+          /* both buffers have identical glyph indices */
+          hb_buffer_clear_contents( buf );
+        }
+      }
+    }
+
     *count = hb_buffer_get_length( buf );
 
 #ifdef FT_DEBUG_LEVEL_TRACE
-      if ( feature && *count > 1 )
-        FT_TRACE1(( "af_get_char_index:"
-                    " input character mapped to multiple glyphs\n" ));
+    if ( feature && *count > 1 )
+      FT_TRACE1(( "af_shaper_get_cluster:"
+                  " input character mapped to multiple glyphs\n" ));
 #endif
 
     return q;
@@ -531,11 +576,13 @@
   FT_Error
   af_shaper_get_coverage( AF_FaceGlobals  globals,
                           AF_StyleClass   style_class,
-                          FT_UShort*      gstyles )
+                          FT_UShort*      gstyles,
+                          FT_Bool         default_script )
   {
     FT_UNUSED( globals );
     FT_UNUSED( style_class );
     FT_UNUSED( gstyles );
+    FT_UNUSED( default_script );
 
     return FT_Err_Ok;
   }

@@ -1,6 +1,6 @@
 # CMakeLists.txt
 #
-# Copyright 2013-2015 by
+# Copyright 2013-2016 by
 # David Turner, Robert Wilhelm, and Werner Lemberg.
 #
 # Written originally by John Cary <cary@txcorp.com>
@@ -36,11 +36,11 @@
 #
 # For an iOS static library, use
 #
-#   cmake <path-to-freetype2-src-dir> -D IOS_PLATFORM=OS -G Xcode
+#   cmake -D IOS_PLATFORM=OS -G Xcode <path-to-freetype2-src-dir>
 #
 # or
 #
-#   cmake <path-to-freetype2-src-dir> -D IOS_PLATFORM=SIMULATOR -G Xcode
+#   cmake -D IOS_PLATFORM=SIMULATOR -G Xcode <path-to-freetype2-src-dir>
 #
 # Please refer to the cmake manual for further options, in particular, how
 # to modify compilation and linking parameters.
@@ -102,7 +102,7 @@ if (APPLE)
     set(BUILD_SHARED_LIBS OFF)
 
     set(CMAKE_TOOLCHAIN_FILE
-      ${PROJECT_SOURCE_DIR}/builds/cmake/iOS.cmake)
+      ${CMAKE_SOURCE_DIR}/builds/cmake/iOS.cmake)
   endif ()
 else ()
   if (DEFINED IOS_PLATFORM)
@@ -149,7 +149,7 @@ endif ()
 
 set(VERSION_MAJOR "2")
 set(VERSION_MINOR "6")
-set(VERSION_PATCH "2")
+set(VERSION_PATCH "3")
 
 set(PROJECT_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 set(SHARED_LIBRARY_VERSION ${VERSION_MAJOR}.${VERSION_MINOR})
