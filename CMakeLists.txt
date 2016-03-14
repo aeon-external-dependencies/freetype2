@@ -75,6 +75,9 @@ cmake_minimum_required(VERSION 2.6)
 
 include(CheckIncludeFile)
 
+if (MSVC)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4244 /wd4267 /wd4312")
+endif ()
 
 # CMAKE_TOOLCHAIN_FILE must be set before `project' is called, which
 # configures the base build environment and references the toolchain file
@@ -160,21 +163,21 @@ add_definitions(-DFT2_BUILD_LIBRARY)
 
 
 # Find dependencies
-foreach (d ZLIB BZip2 PNG HarfBuzz)
-  string(TOUPPER "${d}" D)
-
-  if (DEFINED WITH_${d} OR DEFINED WITH_${D})
-    if (WITH_${d} OR WITH_${D})
-      find_package(${d} QUIET REQUIRED)
-    endif ()
-  else ()
-    find_package(${d} QUIET)
-  endif ()
-
-  if (${d}_FOUND OR ${D}_FOUND)
-    message(STATUS "Building with ${d}")
-  endif()
-endforeach ()
+#foreach (d ZLIB BZip2 PNG HarfBuzz)
+#  string(TOUPPER "${d}" D)
+#
+#  if (DEFINED WITH_${d} OR DEFINED WITH_${D})
+#    if (WITH_${d} OR WITH_${D})
+#      find_package(${d} QUIET REQUIRED)
+#    endif ()
+#  else ()
+#    find_package(${d} QUIET)
+#  endif ()
+#
+#  if (${d}_FOUND OR ${D}_FOUND)
+#    message(STATUS "Building with ${d}")
+#  endif()
+#endforeach ()
 
 
 message(STATUS
@@ -322,7 +325,7 @@ endif ()
 
 set(CMAKE_DEBUG_POSTFIX d)
 
-add_library(freetype
+add_library(freetype STATIC
   ${PUBLIC_HEADERS}
   ${PUBLIC_CONFIG_HEADERS}
   ${PRIVATE_HEADERS}
@@ -358,10 +361,10 @@ if (BUILD_FRAMEWORK)
   )
 endif ()
 
-if (NOT CMAKE_VERSION VERSION_LESS 2.8.11)
-  target_include_directories(freetype
-    PUBLIC $<INSTALL_INTERFACE:include/freetype2>)
-endif ()
+#if (NOT CMAKE_VERSION VERSION_LESS 2.8.11)
+#  target_include_directories(freetype
+#    PUBLIC $<INSTALL_INTERFACE:include/freetype2>)
+#endif ()
 
 if (CMAKE_VERSION VERSION_LESS 2.8.12)
   set(MAYBE_PRIVATE "")
@@ -369,49 +372,51 @@ else ()
   set(MAYBE_PRIVATE "PRIVATE")
 endif ()
 
-if (ZLIB_FOUND)
-  target_link_libraries(freetype ${MAYBE_PRIVATE} ${ZLIB_LIBRARIES})
-  include_directories(${ZLIB_INCLUDE_DIRS})
-endif ()
-if (BZIP2_FOUND)
-  target_link_libraries(freetype ${MAYBE_PRIVATE} ${BZIP2_LIBRARIES})
-  include_directories(${BZIP2_INCLUDE_DIR}) # not BZIP2_INCLUDE_DIRS
-endif ()
-if (PNG_FOUND)
-  add_definitions(${PNG_DEFINITIONS})
-  target_link_libraries(freetype ${MAYBE_PRIVATE} ${PNG_LIBRARIES})
-  include_directories(${PNG_INCLUDE_DIRS})
-endif ()
-if (HARFBUZZ_FOUND)
-  target_link_libraries(freetype ${MAYBE_PRIVATE} ${HARFBUZZ_LIBRARIES})
-  include_directories(${HARFBUZZ_INCLUDE_DIRS})
-endif ()
+#if (ZLIB_FOUND)
+  #target_link_libraries(freetype ${MAYBE_PRIVATE} ${ZLIB_LIBRARIES})
+  #include_directories(${ZLIB_INCLUDE_DIRS})
+#endif ()
+#if (BZIP2_FOUND)
+#  target_link_libraries(freetype ${MAYBE_PRIVATE} ${BZIP2_LIBRARIES})
+#  include_directories(${BZIP2_INCLUDE_DIR}) # not BZIP2_INCLUDE_DIRS
+#endif ()
+#if (PNG_FOUND)
+#  add_definitions(${PNG_DEFINITIONS})
+#  target_link_libraries(freetype ${MAYBE_PRIVATE} ${PNG_LIBRARIES})
+#  include_directories(${PNG_INCLUDE_DIRS})
+#endif ()
+#if (HARFBUZZ_FOUND)
+#  target_link_libraries(freetype ${MAYBE_PRIVATE} ${HARFBUZZ_LIBRARIES})
+#  include_directories(${HARFBUZZ_INCLUDE_DIRS})
+#endif ()
 
+message(STATUS "Building with ZLIB and PNG submodules.")
+target_link_libraries(freetype zlibstatic png_static)
 
 # Installations
 # Note the trailing slash in the argument to the `DIRECTORY' directive
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
-  DESTINATION include/freetype2
-  PATTERN "internal" EXCLUDE
-  PATTERN "ftconfig.h" EXCLUDE
-  PATTERN "ftoption.h" EXCLUDE
-)
-install(FILES
-  ${PROJECT_BINARY_DIR}/include/freetype/config/ftconfig.h
-  ${PROJECT_BINARY_DIR}/include/freetype/config/ftoption.h
-  DESTINATION include/freetype2/freetype/config
-)
-install(TARGETS freetype
-  EXPORT freetype-targets
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
-  FRAMEWORK DESTINATION Library/Frameworks
-)
-install(EXPORT freetype-targets
-  DESTINATION lib/cmake/freetype
-  FILE freetype-config.cmake
-)
+#install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
+#  DESTINATION include/freetype2
+#  PATTERN "internal" EXCLUDE
+#  PATTERN "ftconfig.h" EXCLUDE
+#  PATTERN "ftoption.h" EXCLUDE
+#)
+#install(FILES
+#  ${PROJECT_BINARY_DIR}/include/freetype/config/ftconfig.h
+#  ${PROJECT_BINARY_DIR}/include/freetype/config/ftoption.h
+#  DESTINATION include/freetype2/freetype/config
+#)
+#install(TARGETS freetype
+#  EXPORT freetype-targets
+#  RUNTIME DESTINATION bin
+#  LIBRARY DESTINATION lib
+#  ARCHIVE DESTINATION lib
+#  FRAMEWORK DESTINATION Library/Frameworks
+#)
+#install(EXPORT freetype-targets
+#  DESTINATION lib/cmake/freetype
+#  FILE freetype-config.cmake
+#)
 
 
 # Packaging
