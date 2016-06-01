@@ -52,10 +52,10 @@
 #undef  META_STYLE_LATIN
 #define META_STYLE_LATIN( s, S, ds )                     \
           STYLE_LATIN( s, S, c2cp, C2CP, ds,             \
-                       "petite capticals from capitals", \
+                       "petite capitals from capitals", \
                        PETITE_CAPITALS_FROM_CAPITALS )   \
           STYLE_LATIN( s, S, c2sc, C2SC, ds,             \
-                       "small capticals from capitals",  \
+                       "small capitals from capitals",  \
                        SMALL_CAPITALS_FROM_CAPITALS )    \
           STYLE_LATIN( s, S, ordn, ORDN, ds,             \
                        "ordinals",                       \
@@ -90,6 +90,13 @@
          AF_BLUE_STRINGSET_ARAB,
          AF_COVERAGE_DEFAULT )
 
+  STYLE( armn_dflt, ARMN_DFLT,
+         "Armenian default style",
+         AF_WRITING_SYSTEM_LATIN,
+         AF_SCRIPT_ARMN,
+         AF_BLUE_STRINGSET_ARMN,
+         AF_COVERAGE_DEFAULT )
+
   STYLE( beng_dflt, BENG_DFLT,
          "Bengali default style",
          AF_WRITING_SYSTEM_LATIN,
@@ -106,7 +113,35 @@
          AF_BLUE_STRINGSET_DEVA,
          AF_COVERAGE_DEFAULT )
 
+  STYLE( geor_dflt, GEOR_DFLT,
+         "Georgian (Mkhedruli) default style",
+         AF_WRITING_SYSTEM_LATIN,
+         AF_SCRIPT_GEOR,
+         AF_BLUE_STRINGSET_GEOR,
+         AF_COVERAGE_DEFAULT )
+
+  STYLE( geok_dflt, GEOK_DFLT,
+         "Georgian (Khutsuri) default style",
+         AF_WRITING_SYSTEM_LATIN,
+         AF_SCRIPT_GEOK,
+         AF_BLUE_STRINGSET_GEOK,
+         AF_COVERAGE_DEFAULT )
+
   META_STYLE_LATIN( grek, GREK, "Greek" )
+
+  STYLE( gujr_dflt, GUJR_DFLT,
+         "Gujarati default style",
+         AF_WRITING_SYSTEM_LATIN,
+         AF_SCRIPT_GUJR,
+         AF_BLUE_STRINGSET_GUJR,
+         AF_COVERAGE_DEFAULT )
+
+  STYLE( guru_dflt, GURU_DFLT,
+         "Gurmukhi default style",
+         AF_WRITING_SYSTEM_LATIN,
+         AF_SCRIPT_GURU,
+         AF_BLUE_STRINGSET_GURU,
+         AF_COVERAGE_DEFAULT )
 
   STYLE( hebr_dflt, HEBR_DFLT,
          "Hebrew default style",
@@ -186,7 +221,7 @@
          "no style",
          AF_WRITING_SYSTEM_DUMMY,
          AF_SCRIPT_NONE,
-         (AF_Blue_Stringset)0,
+         AF_BLUE_STRINGSET_NONE,
          AF_COVERAGE_DEFAULT )
 
   STYLE( sinh_dflt, SINH_DFLT,
@@ -229,8 +264,6 @@
                  (AF_Blue_Stringset)0,    \
                  AF_COVERAGE_DEFAULT )
 
-  STYLE_DEFAULT_INDIC( gujr, GUJR, "Gujarati" )
-  STYLE_DEFAULT_INDIC( guru, GURU, "Gurmukhi" )
   STYLE_DEFAULT_INDIC( limb, LIMB, "Limbu" )
   STYLE_DEFAULT_INDIC( orya, ORYA, "Oriya" )
   STYLE_DEFAULT_INDIC( sund, SUND, "Sundanese" )

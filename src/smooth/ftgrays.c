@@ -369,7 +369,7 @@ typedef ptrdiff_t  FT_PtrDist;
 
 
   /* These macros speed up repetitive divisions by replacing them */
-  /* with multiplications and right shifts.                       */ 
+  /* with multiplications and right shifts.                       */
 #define FT_UDIVPREP( b )                                       \
   long  b ## _r = (long)( FT_ULONG_MAX >> PIXEL_BITS ) / ( b )
 #define FT_UDIV( a, b )                                        \
@@ -433,9 +433,6 @@ typedef ptrdiff_t  FT_PtrDist;
     FT_PtrDist  num_cells;
 
     TPos    x,  y;
-
-    FT_Vector   bez_stack[32 * 3 + 1];
-    int         lev_stack[32];
 
     FT_Outline  outline;
     FT_Bitmap   target;
@@ -671,7 +668,7 @@ typedef ptrdiff_t  FT_PtrDist;
     gray_set_cell( RAS_VAR_ ex, ey );
   }
 
-#if 0
+#if 1
 
   /*************************************************************************/
   /*                                                                       */
@@ -689,12 +686,8 @@ typedef ptrdiff_t  FT_PtrDist;
     int     incr;
 
 
-    dx = x2 - x1;
-
     ex1 = TRUNC( x1 );
     ex2 = TRUNC( x2 );
-    fx1 = (TCoord)( x1 - SUBPIXELS( ex1 ) );
-    fx2 = (TCoord)( x2 - SUBPIXELS( ex2 ) );
 
     /* trivial case.  Happens often */
     if ( y1 == y2 )
@@ -702,6 +695,9 @@ typedef ptrdiff_t  FT_PtrDist;
       gray_set_cell( RAS_VAR_ ex2, ey );
       return;
     }
+
+    fx1 = (TCoord)( x1 - SUBPIXELS( ex1 ) );
+    fx2 = (TCoord)( x2 - SUBPIXELS( ex2 ) );
 
     /* everything is located in a single cell.  That is easy! */
     /*                                                        */
@@ -719,6 +715,7 @@ typedef ptrdiff_t  FT_PtrDist;
     p     = ( ONE_PIXEL - fx1 ) * ( y2 - y1 );
     first = ONE_PIXEL;
     incr  = 1;
+    dx    = x2 - x1;
 
     if ( dx < 0 )
     {
@@ -787,16 +784,14 @@ typedef ptrdiff_t  FT_PtrDist;
 
     ey1 = TRUNC( ras.y );
     ey2 = TRUNC( to_y );     /* if (ey2 >= ras.max_ey) ey2 = ras.max_ey-1; */
-    fy1 = (TCoord)( ras.y - SUBPIXELS( ey1 ) );
-    fy2 = (TCoord)( to_y - SUBPIXELS( ey2 ) );
-
-    dx = to_x - ras.x;
-    dy = to_y - ras.y;
 
     /* perform vertical clipping */
     if ( ( ey1 >= ras.max_ey && ey2 >= ras.max_ey ) ||
          ( ey1 <  ras.min_ey && ey2 <  ras.min_ey ) )
       goto End;
+
+    fy1 = (TCoord)( ras.y - SUBPIXELS( ey1 ) );
+    fy2 = (TCoord)( to_y - SUBPIXELS( ey2 ) );
 
     /* everything is on a single scanline */
     if ( ey1 == ey2 )
@@ -804,6 +799,9 @@ typedef ptrdiff_t  FT_PtrDist;
       gray_render_scanline( RAS_VAR_ ey1, ras.x, fy1, to_x, fy2 );
       goto End;
     }
+
+    dx = to_x - ras.x;
+    dy = to_y - ras.y;
 
     /* vertical line - avoid calling gray_render_scanline */
     incr = 1;
@@ -918,8 +916,6 @@ typedef ptrdiff_t  FT_PtrDist;
     TCoord  ex1, ex2, ey1, ey2;
 
 
-    ex1 = TRUNC( ras.x );
-    ex2 = TRUNC( to_x );
     ey1 = TRUNC( ras.y );
     ey2 = TRUNC( to_y );
 
@@ -928,11 +924,14 @@ typedef ptrdiff_t  FT_PtrDist;
          ( ey1 <  ras.min_ey && ey2 <  ras.min_ey ) )
       goto End;
 
-    dx = to_x - ras.x;
-    dy = to_y - ras.y;
+    ex1 = TRUNC( ras.x );
+    ex2 = TRUNC( to_x );
 
     fx1 = ras.x - SUBPIXELS( ex1 );
     fy1 = ras.y - SUBPIXELS( ey1 );
+
+    dx = to_x - ras.x;
+    dy = to_y - ras.y;
 
     if ( ex1 == ex2 && ey1 == ey2 )       /* inside one cell */
       ;
@@ -1066,73 +1065,64 @@ typedef ptrdiff_t  FT_PtrDist;
   gray_render_conic( RAS_ARG_ const FT_Vector*  control,
                               const FT_Vector*  to )
   {
+    FT_Vector   bez_stack[16 * 2 + 1];  /* enough to accommodate bisections */
+    FT_Vector*  arc = bez_stack;
     TPos        dx, dy;
-    TPos        min, max, y;
-    int         top, level;
-    int*        levels;
-    FT_Vector*  arc;
+    int         draw, split;
 
 
-    levels = ras.lev_stack;
-
-    arc      = ras.bez_stack;
     arc[0].x = UPSCALE( to->x );
     arc[0].y = UPSCALE( to->y );
     arc[1].x = UPSCALE( control->x );
     arc[1].y = UPSCALE( control->y );
     arc[2].x = ras.x;
     arc[2].y = ras.y;
-    top      = 0;
+
+    /* short-cut the arc that crosses the current band */
+    if ( ( TRUNC( arc[0].y ) >= ras.max_ey &&
+           TRUNC( arc[1].y ) >= ras.max_ey &&
+           TRUNC( arc[2].y ) >= ras.max_ey ) ||
+         ( TRUNC( arc[0].y ) <  ras.min_ey &&
+           TRUNC( arc[1].y ) <  ras.min_ey &&
+           TRUNC( arc[2].y ) <  ras.min_ey ) )
+    {
+      ras.x = arc[0].x;
+      ras.y = arc[0].y;
+      return;
+    }
 
     dx = FT_ABS( arc[2].x + arc[0].x - 2 * arc[1].x );
     dy = FT_ABS( arc[2].y + arc[0].y - 2 * arc[1].y );
     if ( dx < dy )
       dx = dy;
 
-    if ( dx < ONE_PIXEL / 4 )
-      goto Draw;
+    /* We can calculate the number of necessary bisections because  */
+    /* each bisection predictably reduces deviation exactly 4-fold. */
+    /* Even 32-bit deviation would vanish after 16 bisections.      */
+    draw = 1;
+    while ( dx > ONE_PIXEL / 4 )
+    {
+      dx   >>= 2;
+      draw <<= 1;
+    }
 
-    /* short-cut the arc that crosses the current band */
-    min = max = arc[0].y;
-
-    y = arc[1].y;
-    if ( y < min ) min = y;
-    if ( y > max ) max = y;
-
-    y = arc[2].y;
-    if ( y < min ) min = y;
-    if ( y > max ) max = y;
-
-    if ( TRUNC( min ) >= ras.max_ey || TRUNC( max ) < ras.min_ey )
-      goto Draw;
-
-    level = 0;
+    /* We use decrement counter to count the total number of segments */
+    /* to draw starting from 2^level. Before each draw we split as    */
+    /* many times as there are trailing zeros in the counter.         */
     do
     {
-      dx >>= 2;
-      level++;
-    } while ( dx > ONE_PIXEL / 4 );
-
-    levels[0] = level;
-
-    do
-    {
-      level = levels[top];
-      if ( level > 0 )
+      split = 1;
+      while ( ( draw & split ) == 0 )
       {
         gray_split_conic( arc );
         arc += 2;
-        top++;
-        levels[top] = levels[top - 1] = level - 1;
-        continue;
+        split <<= 1;
       }
 
-    Draw:
       gray_render_line( RAS_VAR_ arc[0].x, arc[0].y );
-      top--;
       arc -= 2;
 
-    } while ( top >= 0 );
+    } while ( --draw );
   }
 
 
@@ -1169,11 +1159,13 @@ typedef ptrdiff_t  FT_PtrDist;
                               const FT_Vector*  control2,
                               const FT_Vector*  to )
   {
-    FT_Vector*  arc;
-    TPos        min, max, y;
+    FT_Vector   bez_stack[16 * 3 + 1];  /* enough to accommodate bisections */
+    FT_Vector*  arc = bez_stack;
+    TPos        dx, dy, dx_, dy_;
+    TPos        dx1, dy1, dx2, dy2;
+    TPos        L, s, s_limit;
 
 
-    arc      = ras.bez_stack;
     arc[0].x = UPSCALE( to->x );
     arc[0].y = UPSCALE( to->y );
     arc[1].x = UPSCALE( control2->x );
@@ -1183,29 +1175,20 @@ typedef ptrdiff_t  FT_PtrDist;
     arc[3].x = ras.x;
     arc[3].y = ras.y;
 
-    /* Short-cut the arc that crosses the current band. */
-    min = max = arc[0].y;
-
-    y = arc[1].y;
-    if ( y < min )
-      min = y;
-    if ( y > max )
-      max = y;
-
-    y = arc[2].y;
-    if ( y < min )
-      min = y;
-    if ( y > max )
-      max = y;
-
-    y = arc[3].y;
-    if ( y < min )
-      min = y;
-    if ( y > max )
-      max = y;
-
-    if ( TRUNC( min ) >= ras.max_ey || TRUNC( max ) < ras.min_ey )
-      goto Draw;
+    /* short-cut the arc that crosses the current band */
+    if ( ( TRUNC( arc[0].y ) >= ras.max_ey &&
+           TRUNC( arc[1].y ) >= ras.max_ey &&
+           TRUNC( arc[2].y ) >= ras.max_ey &&
+           TRUNC( arc[3].y ) >= ras.max_ey ) ||
+         ( TRUNC( arc[0].y ) <  ras.min_ey &&
+           TRUNC( arc[1].y ) <  ras.min_ey &&
+           TRUNC( arc[2].y ) <  ras.min_ey &&
+           TRUNC( arc[3].y ) <  ras.min_ey ) )
+    {
+      ras.x = arc[0].x;
+      ras.y = arc[0].y;
+      return;
+    }
 
     for (;;)
     {
@@ -1214,64 +1197,53 @@ typedef ptrdiff_t  FT_PtrDist;
       /* F. Hain, at                                                      */
       /* http://www.cis.southalabama.edu/~hain/general/Publications/Bezier/Camera-ready%20CISST02%202.pdf */
 
-      {
-        TPos  dx, dy, dx_, dy_;
-        TPos  dx1, dy1, dx2, dy2;
-        TPos  L, s, s_limit;
+      /* dx and dy are x and y components of the P0-P3 chord vector. */
+      dx = dx_ = arc[3].x - arc[0].x;
+      dy = dy_ = arc[3].y - arc[0].y;
 
+      L = FT_HYPOT( dx_, dy_ );
 
-        /* dx and dy are x and y components of the P0-P3 chord vector. */
-        dx = dx_ = arc[3].x - arc[0].x;
-        dy = dy_ = arc[3].y - arc[0].y;
+      /* Avoid possible arithmetic overflow below by splitting. */
+      if ( L > 32767 )
+        goto Split;
 
-        L = FT_HYPOT( dx_, dy_ );
+      /* Max deviation may be as much as (s/L) * 3/4 (if Hain's v = 1). */
+      s_limit = L * (TPos)( ONE_PIXEL / 6 );
 
-        /* Avoid possible arithmetic overflow below by splitting. */
-        if ( L > 32767 )
-          goto Split;
+      /* s is L * the perpendicular distance from P1 to the line P0-P3. */
+      dx1 = arc[1].x - arc[0].x;
+      dy1 = arc[1].y - arc[0].y;
+      s = FT_ABS( dy * dx1 - dx * dy1 );
 
-        /* Max deviation may be as much as (s/L) * 3/4 (if Hain's v = 1). */
-        s_limit = L * (TPos)( ONE_PIXEL / 6 );
+      if ( s > s_limit )
+        goto Split;
 
-        /* s is L * the perpendicular distance from P1 to the line P0-P3. */
-        dx1 = arc[1].x - arc[0].x;
-        dy1 = arc[1].y - arc[0].y;
-        s = FT_ABS( dy * dx1 - dx * dy1 );
+      /* s is L * the perpendicular distance from P2 to the line P0-P3. */
+      dx2 = arc[2].x - arc[0].x;
+      dy2 = arc[2].y - arc[0].y;
+      s = FT_ABS( dy * dx2 - dx * dy2 );
 
-        if ( s > s_limit )
-          goto Split;
+      if ( s > s_limit )
+        goto Split;
 
-        /* s is L * the perpendicular distance from P2 to the line P0-P3. */
-        dx2 = arc[2].x - arc[0].x;
-        dy2 = arc[2].y - arc[0].y;
-        s = FT_ABS( dy * dx2 - dx * dy2 );
+      /* Split super curvy segments where the off points are so far
+         from the chord that the angles P0-P1-P3 or P0-P2-P3 become
+         acute as detected by appropriate dot products. */
+      if ( dx1 * ( dx1 - dx ) + dy1 * ( dy1 - dy ) > 0 ||
+           dx2 * ( dx2 - dx ) + dy2 * ( dy2 - dy ) > 0 )
+        goto Split;
 
-        if ( s > s_limit )
-          goto Split;
+      gray_render_line( RAS_VAR_ arc[0].x, arc[0].y );
 
-        /* Split super curvy segments where the off points are so far
-           from the chord that the angles P0-P1-P3 or P0-P2-P3 become
-           acute as detected by appropriate dot products. */
-        if ( dx1 * ( dx1 - dx ) + dy1 * ( dy1 - dy ) > 0 ||
-             dx2 * ( dx2 - dx ) + dy2 * ( dy2 - dy ) > 0 )
-          goto Split;
+      if ( arc == bez_stack )
+        return;
 
-        /* No reason to split. */
-        goto Draw;
-      }
+      arc -= 3;
+      continue;
 
     Split:
       gray_split_cubic( arc );
       arc += 3;
-      continue;
-
-    Draw:
-      gray_render_line( RAS_VAR_ arc[0].x, arc[0].y );
-
-      if ( arc == ras.bez_stack )
-        return;
-
-      arc -= 3;
     }
   }
 
@@ -1293,8 +1265,8 @@ typedef ptrdiff_t  FT_PtrDist;
 
     gray_start_cell( RAS_VAR_ TRUNC( x ), TRUNC( y ) );
 
-    worker->x = x;
-    worker->y = y;
+    ras.x = x;
+    ras.y = y;
     return 0;
   }
 
@@ -2049,7 +2021,7 @@ typedef ptrdiff_t  FT_PtrDist;
 
 
   static int
-  gray_raster_render( gray_PRaster             raster,
+  gray_raster_render( FT_Raster                raster,
                       const FT_Raster_Params*  params )
   {
     const FT_Outline*  outline     = (const FT_Outline*)params->source;
@@ -2097,6 +2069,20 @@ typedef ptrdiff_t  FT_PtrDist;
     /* this version does not support monochrome rendering */
     if ( !( params->flags & FT_RASTER_FLAG_AA ) )
       return FT_THROW( Invalid_Mode );
+
+    /* reject too large outline coordinates */
+    {
+      FT_Vector*  vec   = outline->points;
+      FT_Vector*  limit = vec + outline->n_points;
+
+
+      for ( ; vec < limit; vec++ )
+      {
+        if ( vec->x < -0x1000000L || vec->x > 0x1000000L ||
+             vec->y < -0x1000000L || vec->y > 0x1000000L )
+         return FT_THROW( Invalid_Outline );
+      }
+    }
 
     /* compute clipping box */
     if ( !( params->flags & FT_RASTER_FLAG_DIRECT ) )
@@ -2204,9 +2190,9 @@ typedef ptrdiff_t  FT_PtrDist;
 
 
   static void
-  gray_raster_reset( FT_Raster  raster,
-                     char*      pool_base,
-                     long       pool_size )
+  gray_raster_reset( FT_Raster       raster,
+                     unsigned char*  pool_base,
+                     unsigned long   pool_size )
   {
     FT_UNUSED( raster );
     FT_UNUSED( pool_base );

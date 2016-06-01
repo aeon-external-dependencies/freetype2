@@ -68,6 +68,11 @@
 #   only if it is available.  Example:
 #
 #     cmake ... -DWITH_ZLIB=ON -DWITH_HarfBuzz=OFF ...
+#
+# . Installation of FreeType can be controlled with the CMake variables
+#   `SKIP_INSTALL_HEADERS', `SKIP_INSTALL_LIBRARIES', and `SKIP_INSTALL_ALL'
+#   (this is compatible with the same CMake variables in zlib's CMake
+#   support).
 
 
 cmake_minimum_required(VERSION 2.6)
@@ -161,29 +166,9 @@ set(SHARED_LIBRARY_VERSION ${VERSION_MAJOR}.${VERSION_MINOR})
 # Compiler definitions for building the library
 add_definitions(-DFT2_BUILD_LIBRARY)
 
-
-# Find dependencies
-#foreach (d ZLIB BZip2 PNG HarfBuzz)
-#  string(TOUPPER "${d}" D)
-#
-#  if (DEFINED WITH_${d} OR DEFINED WITH_${D})
-#    if (WITH_${d} OR WITH_${D})
-#      find_package(${d} QUIET REQUIRED)
-#    endif ()
-#  else ()
-#    find_package(${d} QUIET)
-#  endif ()
-#
-#  if (${d}_FOUND OR ${D}_FOUND)
-#    message(STATUS "Building with ${d}")
-#  endif()
-#endforeach ()
-
-
 message(STATUS
   "Creating directory ${PROJECT_BINARY_DIR}/include/freetype/config")
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/include/freetype/config")
-
 
 # Create the configuration file
 message(STATUS
@@ -392,32 +377,6 @@ endif ()
 
 message(STATUS "Building with ZLIB and PNG submodules.")
 target_link_libraries(freetype zlibstatic png_static)
-
-# Installations
-# Note the trailing slash in the argument to the `DIRECTORY' directive
-#install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
-#  DESTINATION include/freetype2
-#  PATTERN "internal" EXCLUDE
-#  PATTERN "ftconfig.h" EXCLUDE
-#  PATTERN "ftoption.h" EXCLUDE
-#)
-#install(FILES
-#  ${PROJECT_BINARY_DIR}/include/freetype/config/ftconfig.h
-#  ${PROJECT_BINARY_DIR}/include/freetype/config/ftoption.h
-#  DESTINATION include/freetype2/freetype/config
-#)
-#install(TARGETS freetype
-#  EXPORT freetype-targets
-#  RUNTIME DESTINATION bin
-#  LIBRARY DESTINATION lib
-#  ARCHIVE DESTINATION lib
-#  FRAMEWORK DESTINATION Library/Frameworks
-#)
-#install(EXPORT freetype-targets
-#  DESTINATION lib/cmake/freetype
-#  FILE freetype-config.cmake
-#)
-
 
 # Packaging
 # CPack version numbers for release tarball name.

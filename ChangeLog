@@ -1,3 +1,576 @@
+2016-05-17  Nikolaus Waxweiler  <madigens@gmail.com>
+
+	[truetype] Let SHPIX move points in the twilight zone in v40.
+
+	* src/truetype/ttinterp.c (Ins_SHPIX): Allow SHPIX to move points in
+	the twilight zone.  Otherwise, treat SHPIX the same as DELTAP.
+	Unbreaks various fonts such as older versions of Rokkitt and DTL
+	Argo T Light that would glitch severly after calling ALIGNRP after a
+	blocked SHPIX.
+
+2016-05-30  Werner Lemberg  <wl@gnu.org>
+
+	[type42] Support `CharStrings' entry format as created by LilyPond.
+
+	* src/type42/t42parse.c (t42_parse_charstrings): Handle entries
+	having the format
+
+	  (foo) cvn 12345 def
+
+2016-05-28  Werner Lemberg  <wl@gnu.org>
+
+	* src/autofit/afranges.c: Remove `UL' postfix from hex numbers.
+
+	Suggested by Alexei.  `UL' is only needed for 16bit compilers, but
+	it seems noone is using this anymore (and we no longer test whether
+	FreeType compiles in such an environment).  Otherwise, it is easy to
+	add the postfix to the `AF_UNICODE_RANGE' macro.
+
+2016-05-26  Alexei Podtelezhnikov  <apodtele@gmail.com>
+
+	[smooth] Shrink bisection stack.
+
+	The convergence of Bézier flatteners is fast with the deviation
+	from straight line being assymptotically cut 4-fold on each bisection.
+	This justifies smaller bisection stack size.
+
+	* src/smooth/ftgrays.c (gray_TWorker): Remove common `bez_stack'.
+	(gray_render_conic): Create and use conic `bez_stack'. Move back the
+	band analysis from...
+	(gray_conic_to): ... here.
+	(gray_render_cubic): Create and use cubic `bez_stack'. Move back the
+	band analysis from...
+	(gray_cubic_to): ... here.
+	(gray_move_to): Updated.
+
+2016-05-25  Werner Lemberg  <wl@gnu.org>
+
+	[autofit] Fixes for Armenian and Gujarati ranges.
+
+	* src/autofit/afranges.c (af_armn_uniranges): Corrected.
+	(af_guru_nonbase_uniranges): Make U+0A3E a base character.
+
+2016-05-24  Werner Lemberg  <wl@gnu.org>
+
+	[autofit] Add support for Armenian script.
+
+	* src/autofit/afblue.dat: Add blue zone data for Armenian.
+
+	* src/autofit/afblue.c, src/autofit/afblue.h: Regenerated.
+
+	* src/autofit/afscript.h: Add Armenian standard characters.
+
+	* src/autofit/afranges.c: Add Armenian data.
+
+	* src/autofit/afstyles.h: Add Armenian data.
+
+2016-05-23  Werner Lemberg  <wl@gnu.org>
+
+	* builds/unix/unix-cc.in (LINK_LIBRARY): Use `-export-symbols'.
+
+	This was commented about 10 years ago – I think the reason then to
+	disable libtool's `-export-symbols' option was to give some badly
+	programmed applications access to internal FreeType functions.
+
+	I believe that we should no longer take care of such programs; the
+	number of symbols exported should be rather restricted as much as
+	possible.
+
+2016-05-22  Werner Lemberg  <wl@gnu.org>
+
+	[autofit] Add blue-zone support for Gurmukhi script.
+
+	This essentially moves the Gurmukhi script from the `Indic' hinter to
+	the `Latin' hinter.
+
+	* src/autofit/afblue.dat: Add blue zone data for Gurmukhi.
+
+	* src/autofit/afblue.c, src/autofit/afblue.h: Regenerated.
+
+	* src/autofit/afscript.h: Add Gurmukhi standard characters and move
+	data out of AF_CONFIG_OPTION_INDIC block.
+
+	* src/autofit/afranges.c: Move Gurmukhi data out of
+	AF_CONFIG_OPTION_INDIC block.
+
+	* src/autofit/afstyles.h: Update Gurmukhi data; in particular, use
+	AF_WRITING_SYSTEM_LATIN.
+
+2016-05-21  Werner Lemberg  <wl@gnu.org>
+
+	Minor clang++ fixes.
+
+	* src/base/ftobjs.c (FT_Add_Module), src/psaux/psobjs.c
+	(ps_parser_load_field), src/type1/t1load.c (parse_subrs): Add
+	initializer.
+
+	* src/cache/ftccache.h (FTC_CACHE_TRYLOOP_END): Avoid implicit
+	conversion from NULL to boolean.
+
+2016-05-21  Werner Lemberg  <wl@gnu.org>
+
+	Work around a bug of the C 8.0.0.1 compiler on AIX 5.3 (#47955).
+
+	* include/freetype/internal/ftmemory.h (cplusplus_typeof): Use
+	braces for `extern "C++"'.
+
+2016-05-17  Nikolaus Waxweiler  <madigens@gmail.com>
+
+	[truetype] Make TT_LOADER_SET_PP support subpixel hinting [3/3].
+
+	* src/truetype/ttgload.c (TT_LOADER_SET_PP): Replace macro with...
+	(tt_loader_set_pp): ... this new function.
+	Update all callers.
+
+2016-05-17  Nikolaus Waxweiler  <madigens@gmail.com>
+
+	[truetype] New implementation of v38 bytecode interpreter [2/3].
+
+	This patch actually modifies the bytecode interpreter.
+
+	See added comments in `ttinterp.h' for more information on this and
+	the following commit in the series.
+
+	* src/truetype/ttinterp.c (SUBPIXEL_HINTING): Replaced by...
+	(NO_SUBPIXEL_HINTING, SUBPIXEL_HINTING_INFINALITY,
+	SUBPIXEL_HINTING_MINIMAL): ...new macros.
+	(Direct_Move, Direct_Move_X, Direct_Move_Y): Handle backwards
+	compatibility.
+	Updated.
+	(Ins_RS, Ins_FDEF, Ins_ENDF, Ins_CALL, Ins_LOOPCALL, Ins_MD):
+	Updated.
+	(Ins_INSTCTRL): Handle native ClearType mode flag.
+	Updated.
+	(Ins_FLIPPT, Ins_FLIPRGON, Ins_FLIPRGOFF): Handle backwards
+	compatibility.
+	(Move_Zp2_Point): Ditto.
+	(Ins_SHP): Updated.
+	(Ins_SHPIX): Handle backwards compatibility.
+	Updated.
+	(Ins_MSIRP, Ins_MDAP, Ins_MIAP, Ins_MDRP, Ins_MIRP): Updated.
+	(Ins_ALIGNRP): Updated.
+	(Ins_IUP, Ins_DELTAP): Handle backwards compatibility.
+	Updated.
+	(Ins_GETINFO): Handle v38 flags.
+	Updated.
+	(TT_RunIns): Handle backwards compatibility mode.
+	Updated.
+
+2016-05-17  Nikolaus Waxweiler  <madigens@gmail.com>
+
+	[truetype] New implementation of v38 bytecode interpreter [1/3].
+
+	This patch prepares data structures and the like.
+
+	See added comments in `ttinterp.h' for more information on this and
+	the following commits in the series.
+
+	* devel/ftoption.h, include/freetype/config/ftoption.h
+	(TT_CONFIG_OPTION_SUBPIXEL_HINTING): Assign values to differentiate
+	between subpixel versions.
+	(TT_SUPPORT_SUBPIXEL_HINTING_INFINALITY,
+	TT_SUPPORT_SUBPIXEL_HINTING_MINIMAL): New macros.
+
+	* include/freetype/ftttdrv.h (TT_INTERPRETER_VERSION_40): New macro.
+
+	* include/freetype/internal/tttypes.h (TT_FaceRec): Updated.
+
+	* src/truetype/ttinterp.h (TT_ExecContextRec): Define new fields
+	`subpixel_hinting_lean', `vertical_lcd_lean',
+	`backwards_compatibility', `iupx_called', iupy_called', and
+	`grayscale_cleartype' for new hinting mode.
+
+	* src/truetype/ttdriver.c (tt_property_set): Handle v38 and v40
+	interpreters conditionally.
+
+	* src/truetype/ttgload.c (TT_Hint_Glyph): Save phantom points unless
+	in v38 backwards compatibility mode.
+	Updated.
+	(compute_glyph_metrics): Add v38 backwards compatibility mode
+	constraint for adjusting advance widths.
+	Updated.
+	(tt_loader_init): Handle new flags `subpixel_hinting_lean',
+	`grayscale_cleartype', and `vertical_lcd_lean'.
+	Updated.
+	(tt_get_metrics, TT_Process_Simple_Glyph, TT_LOADER_SET_PP):
+	Updated.
+
+	* src/truetype/ttobjs.c (tt_driver_init): Conditionally set
+	default interpreter version number.
+
+	* src/truetype/ttsubpix.c, src/truetype/ttsubpix.h: Updated.
+
+2016-05-17  Werner Lemberg  <wl@gnu.org>
+
+	[cff] Fix matrix scaling (#47848).
+
+	* include/freetype/config/ftstdlib.h (FT_LONG_MIN): New macro.
+
+	* src/cff/cffparse.c (cff_parse_font_matrix): Use largest scaling
+	value of all matrix coefficients to scale matrix.
+
+	* src/cff/cffobjs.c (cff_face_init): Use `matrix->yx' member for
+	matrix normalization if `matrix->yy' is zero.
+
+2016-05-16  Werner Lemberg  <wl@gnu.org>
+
+	[base] Reject invalid sfnt Mac resource (#47891).
+
+	* src/base/ftobjs.c (open_face_PS_from_sfnt_stream): Check validity
+	of `CID ' and `TYPE1' table offset and length.
+
+2016-05-16  Werner Lemberg  <wl@gnu.org>
+
+	[cid] Fix scanning for `StartData' and `/sfnts' (#47892).
+
+	* src/cid/cidparse.c (STARTDATA, STARTDATA_LEN, SFNTS, SFNTS_LEN):
+	New macros.
+	(cid_parser_new): Fix and document algorithm.
+
+2016-05-16  suzuki toshiya  <mpsuzuki@hiroshima-u.ac.jp>
+
+	[truetype] Improve the recursive reference detector.
+
+	The previous fix for #46372 misunderstood a composite glyph referring
+	same component twice as a recursive reference.  See the discussion
+
+	  http://lists.gnu.org/archive/html/freetype/2016-05/msg00000.html
+
+	Thanks to Khaled Hosny for finding this issue.
+
+	* src/truetype/ttgload.c (ft_list_get_node_at): A function to get
+	the i-th node from FT_List.
+	(load_truetype_glyph): In the traversal scan of the reference tree
+	in the composite glyph, we clear the nodes filled by previous
+	sibling chain.
+
+2016-05-07  Werner Lemberg  <wl@gnu.org>
+
+	[cache] Allow value 0 for face ID.
+
+	We never dereference `face_id', and some implementations might use a
+	running number instead of a pointer.  Additionally, disallowing
+	value zero was undocumented.
+
+	* src/cache/ftccmap.c (FTC_CMapCache_Lookup), src/cache/ftcmanag.c
+	(FTC_Manager_LookupFace, FTC_Manager_RemoveFaceID): Remove test for
+	`face_id'.
+
+2016-05-05  Alexei Podtelezhnikov  <apodtele@gmail.com>
+
+	[smooth] More efficient accounting of conic splits and draws.
+
+	A single decrement counter of segments to draw, instead of an array,
+	contains all the information necessary to decide when to split and
+	when to draw a conic segment. The number of splits before each draw is
+	equal to the number of trailing zeros in the counter.
+
+	* src/smooth/ftgrays.c (gray_TWorker): Remove `lev_stack'.
+	(gray_render_conic): Updated to use decrement counter of segments.
+
+2016-05-05  Werner Lemberg  <wl@gnu.org>
+
+	[cff, truetype] Fix logic for `FT_Property_Set'.
+
+	Otherwise some properties could be set to arbitrary values, which is
+	harmless, but querying could give wrong positive results.
+
+	* src/cff/cffdrivr.c (cff_property_set) [hinting-engine],
+	* src/truetype/ttdriver.c (tt_property_set) [interpreter-version]:
+	Only allow defined values.
+
+2016-04-25  Werner Lemberg  <wl@gnu.org>
+
+	[autofit] Add blue-zone support for Gujarati script.
+
+	This essentially moves the Gujarati script from the `Indic' hinter to
+	the `Latin' hinter.
+
+	* src/autofit/afblue.dat: Add blue zone data for Gujarati.
+
+	* src/autofit/afblue.c, src/autofit/afblue.h: Regenerated.
+
+	* src/autofit/afscript.h: Add Gujarati standard characters and move
+	data out of AF_CONFIG_OPTION_INDIC block.
+
+	* src/autofit/afranges.c: Move Gujarati data out of
+	AF_CONFIG_OPTION_INDIC block.
+
+	* src/autofit/afstyles.h: Update Gujarati data; in particular, use
+	AF_WRITING_SYSTEM_LATIN.
+
+2016-04-24  Werner Lemberg  <wl@gnu.org>
+
+	Minor.
+
+	* include/freetype/freetype.h (FT_HAS_*, FT_IS_*): Protect macro
+	argument with parentheses.
+
+2016-04-24  Werner Lemberg  <wl@gnu.org>
+
+	[truetype] Fix deallocation in case of error (#47726).
+
+	* src/truetype/ttgload.c (load_truetype_glyph): Initialize fields in
+	`outline' that are going to be deallocated in case of error.
+
+2016-04-23  Werner Lemberg  <wl@gnu.org>
+
+	[autofit] Improve Georgian blue zone characters.
+
+	Suggested by Akaki Razmadze <razmadzekoko@gmail.com>.
+
+	* src/autofit/afblue.dat (AF_BLUE_STRING_GEORGIAN_MKHEDRULI_BOTTOM):
+	Updated.
+
+	* src/autofit/afblue.c: Regenerated.
+
+2016-04-16  David Capello  <davidcapello@gmail.com>
+
+	[cmake] Honor SKIP_INSTALL_* settings (as used in zlib).
+
+	As FreeType depends on zlib, if we don't install zlib (e.g., because
+	we defined SKIP_INSTALL_ALL), FreeType cannot be installed, too
+	(cmake triggers an error saying that FreeType cannot be installed
+	because zlib target isn't in the export set).
+
+	* CMakeLists.txt: Honor `SKIP_INSTALL_HEADERS',
+	`SKIP_INSTALL_LIBRARIES', and `SKIP_INSTALL_ALL' settings.
+
+2016-04-16  Behdad Esfahbod  <behdad@behdad.org>
+
+	[truetype] Another fix for non-intermediate GX tuples.
+
+	* src/truetype/ttgxvar.c (ft_var_apply_tuple): Add some missing
+	cases.
+
+2016-04-12  Alexei Podtelezhnikov  <apodtele@gmail.com>
+
+	Remove forgotten macro.
+
+	* include/freetype/internal/internal.h
+	[FT_INTERNAL_POSTSCRIPT_GLOBALS_H]: Remove.
+
+2016-04-09  Werner Lemberg  <wl@gnu.org>
+
+	[autofit] Add support for Georgian scripts.
+
+	Georgian is problematic, since `uppercase' forms of Mkhedruli
+	(called Mtavruli) are not yet defined in Unicode, which means that
+	proper blue zones can't be defined.  However, there is already a
+	proposal submitted to Unicode; see
+
+	  http://www.unicode.org/L2/L2016/16034-n4707-georgian.pdf
+
+	Additionally, due to historical reasons, Unicode treats Khutsuri as
+	the same script as Mkhedruli, and so does OpenType.  However, since
+	the two scripts have completely different shapes it can happen that
+	blue zones differ considerably.  The tag `geok' used here (derived
+	from ISO 15924) to differentiate the two scripts is not an OpenType
+	tag in use.  If we now have a font that contains both glyphs for
+	Mkhedruli and Khutsuri, and it uses OpenType features for both also,
+	HarfBuzz unavoidably treats all glyphs as `geor'.  As a consequence,
+	blue zones for `geok' are not used for glyphs involved in the
+	OpenType features.
+
+	An issue not yet resolved is which OpenType feature should be used
+	to access Mtavruli glyph shapes; right now, FreeType doesn't set up
+	support for them, but it is easy to add them later on as soon as
+	more information is available.
+
+	* src/autofit/afblue.dat: Add blue zone data for Georgian.
+
+	* src/autofit/afblue.c, src/autofit/afblue.h: Regenerated.
+
+	* src/autofit/afscript.h: Add Georgian standard characters.
+
+	* src/autofit/afranges.c: Add Georgian data.
+
+	* src/autofit/afstyles.h: Add Georgian data.
+
+2016-04-05  Werner Lemberg  <wl@gnu.org>
+
+	[autofit] Provide dummy blue zone for pseudo script `none'.
+
+	Even if the dummy hinter is used as the handler for `none' (which
+	doesn't use blue zones), it is more consistent than the old value
+	(which was 0), pointing to Arabic...
+
+	* src/autofit/afblue.dat: Add `AF_BLUE_STRINGSET_NONE'.
+	* src/autofit/afblue.c, src/autofit/afblue.h: Regenerated.
+
+	* src/autofit/afstyles.h (none_dflt): Use AF_BLUE_STRINGSET_NONE.
+
+2016-03-30  Werner Lemberg  <wl@gnu.org>
+
+	* src/pfr/pfrload.c (pfr_aux_name_load): Thinko (#47567).
+
+2016-03-30  Werner Lemberg  <wl@gnu.org>
+
+	* src/pfr/pfrload.c (pfr_log_font_count): Better font size estimate.
+
+2016-03-30  Werner Lemberg  <wl@gnu.org>
+
+	* src/pfr/pfrload.c (pfr_aux_name_load): Fix memory leak (#47567).
+
+2016-03-29  Werner Lemberg  <wl@gnu.org>
+
+	* src/base/ftadvanc.c (FT_Get_Advances): Fix invalid left shift.
+
+2016-03-29  Werner Lemberg  <wl@gnu.org>
+
+	[pfr] Fix binary search (#47514).
+
+	* src/pfr/pfrsbit.c (pfr_lookup_bitmap_data): Handle border
+	conditions correctly.
+
+2016-03-29  Werner Lemberg  <wl@gnu.org>
+
+	[pfr] Minor.
+
+	* src/pfr/pfrsbit.c (pfr_lookup_bitmap_data): Replace `left',
+	`right', and `middle' with `min', `max', and `mid' as used in other
+	FreeType binary search code.
+	(pfr_load_bitmap_metrics): Fix invalid left shift.
+
+2016-03-29  Werner Lemberg  <wl@gnu.org>
+
+	* src/pfr/pfrtypes.h: Replace all enums with macros.
+
+	We need `~FOO' to unset bits, and only with unsigned values (which
+	`enum' isn't normally) this works cleanly.
+
+2016-03-26  Werner Lemberg  <wl@gnu.org>
+
+	[pfr] Robustify bitmap strike handling (#47514).
+
+	We did a binary search for a charcode without ensuring that the
+	searched data is ordered.  Validating the order is now done lazily,
+	this is, the first access to a bitmap glyph triggers the order check
+	in the corresponding bitmap strike.
+
+	* src/pfr/pfrtypes.h (PFR_BitmapFlags): New values
+	`PFR_BITMAP_VALID_CHARCODES' and `PFR_BITMAP_CHARCODES_VALIDATED'.
+
+	* src/pfr/pfrsbit.c (pfr_lookup_bitmap_data): Make `flags' argument
+	a pointer.  Handle new PFR_BITMAP_XXX flags.
+	(pfr_slot_load_bitmap): Updated.
+
+2016-03-26  Werner Lemberg  <wl@gnu.org>
+
+	[pfr] Fix handling of compound glyphs.
+
+	Extra items are indicated with different bit positions.
+
+	* src/pfr/pfrtypes.h (PFR_GlyphFlags): Replace
+	`PFR_GLYPH_EXTRA_ITEMS' with `PFR_GLYPH_SIMPLE_EXTRA_ITEMS' and
+	`PFR_GLYPH_COMPOUND_EXTRA_ITEMS'.
+
+	* src/pfr/pfrgload.c (pfr_glyph_load_simple,
+	pfr_glyph_load_compound): Use them.
+
+2016-03-25  Werner Lemberg  <wl@gnu.org>
+
+	[pfr] Minor.
+
+	* src/pfr/pfrsbit.c, src/pfr/pfrobjs.c: Use flag names instead of
+	bare numbers.
+
+2016-03-25  Werner Lemberg  <wl@gnu.org>
+
+	[pfr] Various clang sanitizer fixes.
+
+	* src/pfr/pfrsbit.c (pfr_load_bitmap_metrics): Correctly handle
+	signed nibbles.
+	(pfr_slot_load_bitmap): Correctly exit frame in case of error.
+	Fix invalid left shifts.
+
+2016-03-23  Werner Lemberg  <wl@gnu.org>
+
+	Rename `VERSION.DLL' (#47472).
+
+	* docs/VERSION.DLL: Renamed to...
+	* docs/VERSIONS.TXT: ...this.
+
+2016-03-23  Werner Lemberg  <wl@gnu.org>
+
+	[raster, smooth] Directly test outline size (#47500).
+
+	This improves stand-alone compilation.
+
+	* src/base/ftoutln.c (FT_Outline_Render): Move cbox size test to...
+
+	* src/raster/ftraster.c (ft_black_render), src/smooth/ftgrays.c
+	(gray_raster_render): ...these functions.
+
+2016-03-23  Werner Lemberg  <wl@gnu.org>
+
+	[raster, smooth] Fix some clang sanitizer runtime issues.
+
+	* src/raster/ftraster.c (ft_black_reset, ft_black_set_mode,
+	ft_black_render): Harmonize signatures with `ftimage.h'.
+
+	* src/smooth/ftgrays.c (gray_raster_render, gray_raster_reset):
+	Ditto.
+
+2016-03-22  Werner Lemberg  <wl@gnu.org>
+
+	* src/truetype/ttgload.c (TT_Load_Simple_Glyph): Minor.
+
+	This fixes an AddressSanitizer issue:
+
+	  ttgload.c:430:7: runtime error: null pointer passed as argument 1,
+	                   which is declared to never be null
+
+2016-03-21  Werner Lemberg  <wl@gnu.org>
+
+	* src/autofit/afhints.c (af_glyph_hints_reload): Thinko.
+
+	This fixes the previous commit to this file.
+
+2016-03-21  Alexei Podtelezhnikov  <apodtele@gmail.com>
+
+	[smooth] Partly revert recent changes.
+
+	* src/smooth/ftgrays.c (gray_conic_to, gray_cubic_to): Rework
+	conditions to fix rendering issues.
+
+2016-03-20  Werner Lemberg  <wl@gnu.org>
+
+	[autofit] Show `near' points in tracing.
+
+	* src/autofit/afhints.h (AF_FLAG_NEAR): New macro.
+
+	* src/autofit/afhints.c (af_glyph_hints_dump_points): Implement it.
+	(af_glyph_hints_reload): Handle AF_FLAG_NEAR.
+
+2016-03-18  Alexei Podtelezhnikov  <apodtele@gmail.com>
+
+	[smooth] Minor refactoring and microoptimizations.
+
+	* src/smooth/ftgrays.c (gray_render_conic, gray_render_cubic): Move
+	band clipping from here.
+	(gray_conic_to, gray_cubic_to): ... to here.
+	(gray_rander_line, gray_render_scanline): Initialize variables closer
+	to their use.
+
+2016-03-17  Alexei Podtelezhnikov  <apodtele@gmail.com>
+
+	[smooth] Minor refactoring.
+
+	* src/smooth/ftgrays.c (gray_render_conic, gray_render_cubic): Move
+	upscaling from here.
+	(gray_conic_to, gray_cubic_to): ... to here.
+
+2016-03-15  Werner Lemberg  <wl@gnu.org>
+
+	* src/autofit/aflatin.c (af_latin_compute_stem_width): Optimize.
+
+2016-03-14  Alexei Podtelezhnikov  <apodtele@gmail.com>
+
+	[smooth] Temporarily revert 6eb6158dd787 (#47114).
+
+	* src/smooth/ftgrays.c (gray_render_line): Old implementation.
+
 2016-03-12  Werner Lemberg  <wl@gnu.org>
 
 	[ftfuzzer] Improve coverage of rasterfuzzer.
@@ -850,7 +1423,7 @@
 	[bdf] Remove dead code (#46625).
 
 	The BDF specification only allows decimal numbers, no octal or
-	hexidecimal decoding is needed.
+	hexadecimal decoding is needed.
 
 	* src/bdf/bdflib.c (_bdf_atoul, _bdf_atol, _bdf_atous,
 	_bdf_atos): Remove unused code and parameters.
@@ -869,7 +1442,7 @@
 	[base] Check error when seeking to data supplied offset (#46635).
 
 	* src/base/ftobjs.c (open_face_PS_from_sfnt_stream):
-	`ft_lookup_PS_in_sfnt_stream' returns offset and and length from
+	`ft_lookup_PS_in_sfnt_stream' returns offset and length from
 	user supplied data.  Use of this these values must be checked.
 
 2015-12-13  Werner Lemberg  <wl@gnu.org>
@@ -1023,7 +1596,7 @@
 	* src/autofit/afglobal.c: s/hbshim.h/afshaper.h/.
 	(af_face_globals_compute_style_coverage): Updated.
 
-	* src/autofit/afglocal.h: s/hbshim.h/afshaper.h/.
+	* src/autofit/afglobal.h: s/hbshim.h/afshaper.h/.
 
 	* src/autofit/autofit.c: s/hbshim.c/afshaper.c/.
 
@@ -1989,7 +2562,7 @@
 
 2015-10-04  Werner Lemberg  <wl@gnu.org>
 
-	[bzip2, gzip] Avoid access of unitialized memory (#46109).
+	[bzip2, gzip] Avoid access of uninitialized memory (#46109).
 
 	* src/bzip2/ftbzip2.c (ft_bzip2_file_fill_input), src/gzip/ftgzip.c
 	(ft_gzip_file_fill_input): In case of an error, adjust the limit to
@@ -1997,7 +2570,7 @@
 
 2015-10-03  Werner Lemberg  <wl@gnu.org>
 
-	[bzip2, gzip] Avoid access of unitialized memory (#46109).
+	[bzip2, gzip] Avoid access of uninitialized memory (#46109).
 
 	* src/bzip2/ftbzip2.c (ft_bzip2_file_fill_output), src/gzip/ftgzip.c
 	(ft_gzip_file_fill_output): In case of an error, adjust the limit to
@@ -2406,7 +2979,7 @@
 	[raster,smooth] Microoptimizations.
 
 	* src/raster/ftraster.c (Insert_Y_Turn, Finalize_Profile_Table,
-	Beziier_Up, ): Use do-while loops.
+	Bezier_Up, ): Use do-while loops.
 
 	* src/smooth/ftgrays.c (gray_render_scanline, gray_render_line,
 	gray_convert_glyph): Ditto.
@@ -2537,7 +3110,7 @@
 	[base] Improve emboldener (#45596).
 
 	* src/base/ftoutln.c (FT_Outline_EmboldenXY): Correct displacement
-	of zero-lenght segments.
+	of zero-length segments.
 
 2015-08-16  Alexei Podtelezhnikov  <apodtele@gmail.com>
 
@@ -2612,7 +3185,7 @@
 	* src/type1/t1gload.c (T1_Load_Glyph): Directly modify advances only
 	if font matrix is not trivial.
 	* src/cff/cffgload.c (cff_slot_load): Ditto.
-	* sff/cid/cidgload.c (cid_slot_load_glyph): Ditto for advances and the
+	* src/cid/cidgload.c (cid_slot_load_glyph): Ditto for advances and the
 	entire outline.
 
 2015-08-11  Werner Lemberg  <wl@gnu.org>
@@ -3357,7 +3930,7 @@
 
 	* src/autofit/afhints.h (AF_HINTS_DO_WARP): New macro.
 
-	* src/autofi/aflatin.c (af_latin_hints_apply)
+	* src/autofit/aflatin.c (af_latin_hints_apply)
 	[AF_CONFIG_OPTION_USE_WARPER]: Use `AF_HINTS_DO_WARP' to control use
 	of warper.
 
@@ -3988,7 +4561,7 @@
 	* src/pfr/pfrload.c (pfr_extra_item_load_font_id): Ditto.
 	* src/psaux/psobjs.c (ps_table_add), src/psaux/psobjs.h: Ditto.
 	* src/type1/t1load.c (parse_blend_axis_types, parse_encoding,
-	parse_chharstrings, parse_dict): Ditto.
+	parse_charstrings, parse_dict): Ditto.
 	* src/type42/t42parse.c (t42_parse_encoding, t42_parse_charstrings,
 	t42_parse_dict): Ditto.
 
@@ -4061,7 +4634,7 @@
 	* include/internal/ftstream.h (FT_Stream_Pos): Return `FT_ULong'.
 
 	* src/base/ftoutln.c, src/base/ftrfork.c, src/base/ftstream.c:
-	Signedess fixes.
+	Signedness fixes.
 
 2015-02-16  Werner Lemberg  <wl@gnu.org>
 
@@ -4579,7 +5152,7 @@
 
 2015-01-11  Werner Lemberg  <wl@gnu.org>
 
-	[truetype] Prettyfing.
+	[truetype] Prettifying.
 
 	* src/truetype/ttinterp.c (project, dualproj, fast_project,
 	fast_dualproj): Rename to...
@@ -4611,7 +5184,7 @@
 	[truetype] More macro expansions.
 
 	* src/truetype/ttinterp.c (INS_ARG): Remove macro by expansion,
-	adjusting funtion calls where necessary.
+	adjusting function calls where necessary.
 	(FT_UNUSED_ARG): Removed, no longer needed.
 
 2015-01-10  Werner Lemberg  <wl@gnu.org>
