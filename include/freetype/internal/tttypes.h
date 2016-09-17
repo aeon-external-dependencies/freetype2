@@ -1371,6 +1371,7 @@ FT_BEGIN_HEADER
     FT_ULong              sbit_table_size;
     TT_SbitTableType      sbit_table_type;
     FT_UInt               sbit_num_strikes;
+    FT_UInt*              sbit_strike_map;
 
     FT_Byte*              kern_table;
     FT_ULong              kern_table_size;
@@ -1392,6 +1393,12 @@ FT_BEGIN_HEADER
                                                 /* for this face           */
     FT_Bool               sph_compatibility_mode;
 #endif /* TT_SUPPORT_SUBPIXEL_HINTING_INFINALITY */
+
+#ifdef TT_CONFIG_OPTION_EMBEDDED_BITMAPS
+    /* since 2.7 */
+    FT_ULong              ebdt_start;  /* either `CBDT', `EBDT', or `bdat' */
+    FT_ULong              ebdt_size;
+#endif
 
   } TT_FaceRec;
 
