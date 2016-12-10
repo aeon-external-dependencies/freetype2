@@ -412,5 +412,21 @@ if (NOT DEFINED FREETYPE_NO_DIST)
                         FOLDER "External/FreeType")
 endif ()
 
+install(
+    TARGETS freetype
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
+
+install(
+    DIRECTORY include/
+    DESTINATION include
+)
+
+install(
+    DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/
+    DESTINATION include
+)
 
 # eof
