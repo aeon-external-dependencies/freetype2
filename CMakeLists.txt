@@ -314,7 +314,7 @@ if (BUILD_FRAMEWORK)
   )
 endif ()
 
-set(CMAKE_DEBUG_POSTFIX d)
+#set(CMAKE_DEBUG_POSTFIX d)
 
 add_library(freetype STATIC
   ${PUBLIC_HEADERS}
