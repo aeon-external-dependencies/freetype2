@@ -94,7 +94,7 @@ if (NOT CMAKE_VERSION VERSION_LESS 3.3)
 endif ()
 
 if (MSVC)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4244 /wd4267 /wd4312")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4018 /wd4244 /wd4267 /wd4312 /wd4701")
 endif ()
 
 include(CheckIncludeFile)
@@ -137,6 +137,8 @@ endif ()
 
 project(freetype C)
 
+set(SKIP_INSTALL_ALL 1)
+
 set(VERSION_MAJOR "2")
 set(VERSION_MINOR "9")
 set(VERSION_PATCH "1")
@@ -155,9 +157,9 @@ set(LIBRARY_SOVERSION "6")
 # optionally found anyway. Use `-DCMAKE_DISABLE_FIND_PACKAGE_x=TRUE` to disable
 # searching for a packge entirely (x is the CMake package name, so "BZip2"
 # instead of "BZIP2").
-option(FT_WITH_ZLIB "Use system zlib instead of internal library." OFF)
+option(FT_WITH_ZLIB "Use system zlib instead of internal library." ON)
 option(FT_WITH_BZIP2 "Support bzip2 compressed fonts." OFF)
-option(FT_WITH_PNG "Support PNG compressed OpenType embedded bitmaps." OFF)
+option(FT_WITH_PNG "Support PNG compressed OpenType embedded bitmaps." ON)
 option(FT_WITH_HARFBUZZ "Improve auto-hinting of OpenType fonts." OFF)
 
 
@@ -195,17 +197,21 @@ else ()
   find_package(HarfBuzz 1.3.0)
 endif ()
 
-if (FT_WITH_PNG)
-  find_package(PNG REQUIRED)
-else ()
-  find_package(PNG)
-endif ()
+#if (FT_WITH_PNG)
+#  find_package(PNG REQUIRED)
+#else ()
+#  find_package(PNG)
+#endif ()
 
-if (FT_WITH_ZLIB)
-  find_package(ZLIB REQUIRED)
-else ()
-  find_package(ZLIB)
-endif ()
+set(PNG_FOUND 1)
+
+#if (FT_WITH_ZLIB)
+#  find_package(ZLIB REQUIRED)
+#else ()
+#  find_package(ZLIB)
+#endif ()
+
+set(ZLIB_FOUND 1)
 
 if (FT_WITH_BZIP2)
   find_package(BZip2 REQUIRED)
@@ -347,6 +353,8 @@ add_library(freetype
   ${BASE_SRCS}
 )
 
+set_target_properties(freetype PROPERTIES FOLDER "External/freetype2")
+
 set_target_properties(
   freetype PROPERTIES
     C_VISIBILITY_PRESET hidden)
@@ -397,8 +405,9 @@ endif ()
 set(PKG_CONFIG_REQUIRED_PRIVATE "")
 
 if (ZLIB_FOUND)
-  target_link_libraries(freetype PRIVATE ${ZLIB_LIBRARIES})
-  target_include_directories(freetype PRIVATE ${ZLIB_INCLUDE_DIRS})
+  #target_link_libraries(freetype PRIVATE ${ZLIB_LIBRARIES})
+  #target_include_directories(freetype PRIVATE ${ZLIB_INCLUDE_DIRS})
+  target_link_libraries(freetype PRIVATE zlibstatic)
   list(APPEND PKG_CONFIG_REQUIRED_PRIVATE zlib)
 endif ()
 if (BZIP2_FOUND)
@@ -407,9 +416,10 @@ if (BZIP2_FOUND)
   list(APPEND PKG_CONFIG_REQUIRED_PRIVATE bzip2)
 endif ()
 if (PNG_FOUND)
-  target_link_libraries(freetype PRIVATE ${PNG_LIBRARIES})
-  target_compile_definitions(freetype PRIVATE ${PNG_DEFINITIONS})
-  target_include_directories(freetype PRIVATE ${PNG_INCLUDE_DIRS})
+  #target_link_libraries(freetype PRIVATE ${PNG_LIBRARIES})
+  target_link_libraries(freetype PRIVATE png_static)
+  #target_compile_definitions(freetype PRIVATE ${PNG_DEFINITIONS})
+  #target_include_directories(freetype PRIVATE ${PNG_INCLUDE_DIRS})
   list(APPEND PKG_CONFIG_REQUIRED_PRIVATE libpng)
 endif ()
 if (HARFBUZZ_FOUND)
