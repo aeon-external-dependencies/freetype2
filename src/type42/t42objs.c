@@ -1,19 +1,19 @@
-/***************************************************************************/
-/*                                                                         */
-/*  t42objs.c                                                              */
-/*                                                                         */
-/*    Type 42 objects manager (body).                                      */
-/*                                                                         */
-/*  Copyright 2002-2016 by                                                 */
-/*  Roberto Alameda.                                                       */
-/*                                                                         */
-/*  This file is part of the FreeType project, and may only be used,       */
-/*  modified, and distributed under the terms of the FreeType project      */
-/*  license, LICENSE.TXT.  By continuing to use, modify, or distribute     */
-/*  this file you indicate that you have read the license and              */
-/*  understand and accept it fully.                                        */
-/*                                                                         */
-/***************************************************************************/
+/****************************************************************************
+ *
+ * t42objs.c
+ *
+ *   Type 42 objects manager (body).
+ *
+ * Copyright 2002-2018 by
+ * Roberto Alameda.
+ *
+ * This file is part of the FreeType project, and may only be used,
+ * modified, and distributed under the terms of the FreeType project
+ * license, LICENSE.TXT.  By continuing to use, modify, or distribute
+ * this file you indicate that you have read the license and
+ * understand and accept it fully.
+ *
+ */
 
 
 #include "t42objs.h"
@@ -25,7 +25,7 @@
 
 
 #undef  FT_COMPONENT
-#define FT_COMPONENT  trace_t42
+#define FT_COMPONENT  t42
 
 
   static FT_Error
@@ -394,12 +394,6 @@
 
         if ( clazz )
           error = FT_CMap_New( clazz, NULL, &charmap, NULL );
-
-#if 0
-        /* Select default charmap */
-        if ( root->num_charmaps )
-          root->charmap = root->charmaps[0];
-#endif
       }
     }
   Exit:
@@ -463,20 +457,21 @@
   }
 
 
-  /*************************************************************************/
-  /*                                                                       */
-  /* <Function>                                                            */
-  /*    T42_Driver_Init                                                    */
-  /*                                                                       */
-  /* <Description>                                                         */
-  /*    Initializes a given Type 42 driver object.                         */
-  /*                                                                       */
-  /* <Input>                                                               */
-  /*    driver :: A handle to the target driver object.                    */
-  /*                                                                       */
-  /* <Return>                                                              */
-  /*    FreeType error code.  0 means success.                             */
-  /*                                                                       */
+  /**************************************************************************
+   *
+   * @Function:
+   *   T42_Driver_Init
+   *
+   * @Description:
+   *   Initializes a given Type 42 driver object.
+   *
+   * @Input:
+   *   driver ::
+   *     A handle to the target driver object.
+   *
+   * @Return:
+   *   FreeType error code.  0 means success.
+   */
   FT_LOCAL_DEF( FT_Error )
   T42_Driver_Init( FT_Module  module )        /* T42_Driver */
   {
@@ -590,7 +585,7 @@
     FT_Error       error   = FT_Err_Ok;
 
 
-    if ( face->glyph == NULL )
+    if ( !face->glyph )
     {
       /* First glyph slot for this face */
       slot->ttslot = t42face->ttf_face->glyph;
